@@ -8,7 +8,7 @@ env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: dinusha-app
   ECS_CLUSTER: dinusha-cluster
-  ECS_SERVICE: dinusha-service
+  ECS_SERVICE: dinusha-task-service-47nvsb16
   CONTAINER_NAME: dinusha-app
 
 jobs:
