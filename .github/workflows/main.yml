@@ -10,6 +10,7 @@ env:
   ECS_CLUSTER: dinusha-cluster
   ECS_SERVICE: dinusha-task-service-47nvsb16
   CONTAINER_NAME: dinusha-app
+  TASK_DEFINITION: dinusha-task
 
 jobs:
   deploy:
@@ -40,10 +41,23 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Deploy to ECS
+    - name: Download task definition
       run: |
-        aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }} \
-          --service ${{ env.ECS_SERVICE }} \
-          --force-new-deployment \
-          --region ${{ env.AWS_REGION }}
+        aws ecs describe-task-definition --task-definition ${{ env.TASK_DEFINITION }} \
+        --query taskDefinition > task-definition.json
+
+    - name: Update ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy to ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: false
