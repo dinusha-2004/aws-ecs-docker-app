@@ -44,7 +44,13 @@ jobs:
     - name: Download task definition
       run: |
         aws ecs describe-task-definition --task-definition ${{ env.TASK_DEFINITION }} \
-        --query taskDefinition > task-definition.json
+        --query taskDefinition > task-definition-full.json
+        cat task-definition-full.json | python3 -c "
+        import json,sys
+        t=json.load(sys.stdin)
+        for k in ['taskDefinitionArn','revision','status','requiresAttributes','compatibilities','registeredAt','registeredBy','enableFaultInjection']:
+            t.pop(k,None)
+        print(json.dumps(t))" > task-definition.json
 
     - name: Update ECS task definition
       id: task-def
